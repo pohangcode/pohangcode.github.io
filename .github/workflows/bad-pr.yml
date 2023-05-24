@@ -1,25 +1,35 @@
+# Workflow 이름은 "Cleanup bad PR"입니다.
 name: Cleanup bad PR
 
+# 이 워크플로우는 pull request가 열리거나 다시 열릴 때 실행됩니다.
 on:
   pull_request_target:
     types: [opened, reopened]
 
+# 이 워크플로우에는 하나의 job인 "close-pr"이 있습니다.
 jobs:
   close-pr:
+    # 이 job은 ubuntu-latest 환경에서 실행됩니다.
     runs-on: ubuntu-latest
+    # 조건문을 통해 PR 본문에 'by deleting this comment block'이 포함되어 있거나 본문이 비어있는 경우에만 이 job을 실행합니다.
     if: "contains(github.event.pull_request.body, 'by deleting this comment block') || github.event.pull_request.body == ''"
+    # job은 여러 개의 step으로 구성되어 있습니다.
     steps:
+      # 첫 번째 step은 'actions-ecosystem/action-add-labels@v1'을 사용하여 'Type: Invalid'라는 레이블을 PR에 추가합니다.
       - uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: 'Type: Invalid'
+      # 두 번째 step은 'superbrothers/close-pull-request@v3'을 사용하여 PR을 닫습니다.
+      # PR을 닫기 전에 주석을 달아 작성자에게 PR이 잘못된 저장소에 생성되었다는 것을 알립니다.
       - uses: superbrothers/close-pull-request@v3
         with:
-          # Optional. Post an issue comment just before closing a pull request.
           comment: |
             **You have created a Pull Request to the wrong repository.** This is the repository for [Minimal Mistakes][1], the free Jekyll theme. See [GitHub Docs: About pull requests][2] if you need help.
 
-              [1]: https://mmistakes.github.io/minimal-mistakes/
+              [1]: https://pohangcode.github.io/minimal-mistakes/
               [2]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
+      # 마지막 step은 'sudo-bot/action-pull-request-lock@v1.0.5'을 사용하여 PR을 잠글 수 있습니다.
+      # 이때, 잠그는 이유를 'spam'으로 설정합니다.
       - uses: sudo-bot/action-pull-request-lock@v1.0.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
